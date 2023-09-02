@@ -1,4 +1,4 @@
-Absolutely! Here are your detailed revision notes for interviews, formatted in Markdown with emojis.
+
 
 
 # 📚 GL Threads - Understanding Glued Version of Doubly Linked Lists 
