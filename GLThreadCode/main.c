@@ -1,87 +1,99 @@
 #include "glthread.h"
 #include <stdlib.h>
 #include <stdio.h>
-#include <memory.h>
 
-typedef struct emp_ {
+// Private helper function to add a new_node right after curr_node in the thread
+static void _glthread_add_next(glthread_node_t *curr_node, glthread_node_t *new_node){
 
-    char name[30];
-    unsigned int salary;
-    char designation[30];
-    unsigned int emp_id;
-    glthread_node_t glnode;
-} emp_t; 
+    // If the current node's right is NULL, insert new_node to the right of it
+    if(!curr_node->right){
+        curr_node->right = new_node;
+        new_node->left = curr_node;
+        return;
+    }
 
-void
-print_emp_details(emp_t *emp){
-
-    printf("Employee name = %s\n", emp->name);
-    printf("salary = %u\n", emp->salary);
-    printf("designation = %s\n", emp->designation);
-    printf("emp_id = %u\n", emp->emp_id);
+    // Save the node originally to the right of curr_node
+    glthread_node_t *temp = curr_node->right;
+    
+    // Update the right of curr_node to point to new_node
+    curr_node->right = new_node;
+    
+    // Update new_node's left and right pointers
+    new_node->left = curr_node;
+    new_node->right = temp;
+    
+    // Update the 'left' of the node originally to the right of curr_node
+    temp->left = new_node;
 }
 
+// Public API function to add a node to the beginning of a GL thread
+void glthread_add (glthread_t *lst, glthread_node_t *glnode){
 
-int 
-main(int argc, char **argv){
+    // Initialize the left and right pointers of the new node to NULL
+    glnode->left = NULL;
+    glnode->right = NULL;
 
-    emp_t *emp1  = calloc(1, sizeof(emp_t));
-    strncpy(emp1->name, "Neha", strlen("Neha"));
-    emp1->salary = 50000;
-    strncpy(emp1->designation, "HR", strlen("HR"));
-    emp1->emp_id = 21;
-    glthread_node_init((&emp1->glnode));
+    // If the list is empty, set the head to the new node
+    if(!lst->head){
+        lst->head = glnode;
+        return;
+    }
+    
+    // Save current head node
+    glthread_node_t *head = lst->head;
+    
+    // Insert new_node before current head
+    _glthread_add_next(glnode, head);
+    
+    // Update the head of the list to point to the new node
+    lst->head = glnode;
+}
 
-    emp_t *emp2  = calloc(1, sizeof(emp_t));
-    strncpy(emp2->name, "Abhishek", strlen("Abhishek"));
-    emp1->salary = 150000;
-    strncpy(emp2->designation, "SE3", strlen("SE3"));
-    emp2->emp_id = 32;
-    glthread_node_init((&emp2->glnode));
+// Private helper function to remove a node from a GL thread
+static void _remove_glthread(glthread_node_t *glnode){
 
-    emp_t *emp3  = calloc(1, sizeof(emp_t));
-    strncpy(emp3->name, "Arun", strlen("Arun"));
-    emp3->salary = 60000;
-    strncpy(emp3->designation, "SE4", strlen("SE4"));
-    emp3->emp_id = 27;
-    glthread_node_init((&emp3->glnode));
+    // Case 1: Node to be removed is at the beginning
+    if(!glnode->left){
+        if(glnode->right){
+            glnode->right->left = NULL;
+            glnode->right = 0;
+            return;
+        }
+        return;
+    }
+    
+    // Case 2: Node to be removed is at the end
+    if(!glnode->right){
+        glnode->left->right = NULL;
+        glnode->left = NULL;
+        return;
+    }
 
+    // Case 3: Node to be removed is in the middle
+    glnode->left->right = glnode->right;
+    glnode->right->left = glnode->left;
+    glnode->left = 0;
+    glnode->right = 0;
+}
 
-    /*Now Create a glthread*/
-    glthread_t *emp_list = calloc(1, sizeof(glthread_t));
-    init_glthread(emp_list, offsetof(emp_t, glnode));
+// Public API function to remove a node from a GL thread
+void glthread_remove(glthread_t *lst, glthread_node_t *glnode){
 
-    /*Now insert the records in glthread*/
-    glthread_add(emp_list, &emp1->glnode);
-    glthread_add(emp_list, &emp2->glnode);
-    glthread_add(emp_list, &emp3->glnode);
+    glthread_node_t *head = lst->head;
 
+    // If node to be removed is the head, update the head of the list
+    if(head == glnode){
+        lst->head = head->right;
+    }
+    
+    // Use the helper function to remove the node
+    _remove_glthread(glnode);
+}
 
-    /*Walk over glthread*/
-    emp_t *ptr = NULL;
-    ITERATE_GL_THREADS_BEGIN(emp_list, emp_t, ptr){
-
-        print_emp_details(ptr);
-    } ITERATE_GL_THREADS_ENDS;
-
-    /*Let us remove one record at random*/
-
-    glthread_remove(emp_list, &emp2->glnode);
-    printf("\nprinting again . . . \n");
-
-    ITERATE_GL_THREADS_BEGIN(emp_list, emp_t, ptr){
-
-        print_emp_details(ptr);
-    } ITERATE_GL_THREADS_ENDS;
-
-
-    /*Free all Dynamicall allocations*/
-    ITERATE_GL_THREADS_BEGIN(emp_list, emp_t, ptr){
-        
-         glthread_remove(emp_list, &ptr->glnode);
-         free(ptr);
-    } ITERATE_GL_THREADS_ENDS;
-    free(emp_list);
-
-    return 0;
+// Initialize a GL thread with an offset for the node
+void init_glthread(glthread_t *glthread, unsigned int offset){
+    
+    // Initialize the head to NULL and set the offset
+    glthread->head = NULL;
+    glthread->offset = offset;
 }
