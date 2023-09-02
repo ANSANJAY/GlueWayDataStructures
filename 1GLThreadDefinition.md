@@ -1,6 +1,6 @@
 Absolutely! Here are your detailed revision notes for interviews, formatted in Markdown with emojis.
 
-```markdown
+
 # 📚 GL Threads - Understanding Glued Version of Doubly Linked Lists 
 
 ## 📌 Introduction
@@ -51,4 +51,4 @@ GL Threads are a glued version of traditional doubly linked lists, designed to r
 - This point will be explored after diving deeper into some C concepts.
 
 
-Feel free to use these notes for your GitHub README or for interview preparation!
+
